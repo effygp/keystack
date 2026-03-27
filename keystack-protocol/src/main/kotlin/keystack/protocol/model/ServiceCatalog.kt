@@ -74,7 +74,7 @@ object ServiceCatalog {
     }
 
     private fun loadBundledModels() {
-        listOf("sqs.json", "dynamodb.json").forEach { resourceName ->
+        listOf("sqs.json", "dynamodb.json", "s3.json").forEach { resourceName ->
             try {
                 val inputStream: InputStream? = javaClass.classLoader.getResourceAsStream("models/$resourceName")
                 if (inputStream != null) {

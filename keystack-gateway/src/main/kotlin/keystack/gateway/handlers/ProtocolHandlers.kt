@@ -29,6 +29,7 @@ class ServiceDetectionHandler : Handler {
 class RequestParserHandler : Handler {
     private val jsonParser = JsonRequestParser()
     private val queryParser = QueryRequestParser()
+    private val restXmlParser = RestXmlRequestParser()
 
     override suspend fun handle(chain: HandlerChain, context: RequestContext) {
         val service = context.traceContext["serviceModel"] as? ServiceModel
@@ -38,6 +39,7 @@ class RequestParserHandler : Handler {
             val parser = when (service.metadata.protocol) {
                 "json" -> jsonParser
                 "query" -> queryParser
+                "rest-xml" -> restXmlParser
                 else -> null
             }
             
@@ -58,6 +60,7 @@ class RequestParserHandler : Handler {
 class ResponseSerializerHandler : Handler {
     private val jsonSerializer = JsonSerializer()
     private val querySerializer = QuerySerializer()
+    private val restXmlSerializer = keystack.protocol.serializer.RestXmlSerializer()
 
     override suspend fun handle(chain: HandlerChain, context: RequestContext) {
         // This is a response handler, it runs AFTER the provider
@@ -69,6 +72,7 @@ class ResponseSerializerHandler : Handler {
             val serializer = when (service.metadata.protocol) {
                 "json" -> jsonSerializer
                 "query" -> querySerializer
+                "rest-xml" -> restXmlSerializer
                 else -> null
             }
 

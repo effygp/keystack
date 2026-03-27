@@ -64,3 +64,32 @@ class QuerySerializer : ResponseSerializer {
         call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.fromValue(exception.statusCode))
     }
 }
+
+class RestXmlSerializer : ResponseSerializer {
+    private val mapper: XmlMapper = XmlMapper().apply {
+        registerKotlinModule()
+    }
+
+    override suspend fun serialize(response: Any, service: ServiceModel, operation: OperationModel, requestId: String, call: io.ktor.server.application.ApplicationCall) {
+        // S3 REST-XML uses different formats depending on the operation
+        // For simplicity in MVP, we'll respond with a basic XML structure
+        if (response is String) {
+            // Raw body like GetObject
+            call.respondText(response, ContentType.Application.Xml, HttpStatusCode.OK)
+            return
+        }
+        
+        val xml = mapper.writeValueAsString(response)
+        call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.OK)
+    }
+
+    override suspend fun serializeError(exception: ServiceException, service: ServiceModel, operation: OperationModel, requestId: String, call: io.ktor.server.application.ApplicationCall) {
+        // S3 specific error format
+        val xml = "<Error>" +
+                  "<Code>${exception.code}</Code>" +
+                  "<Message>${exception.message}</Message>" +
+                  "<RequestId>$requestId</RequestId>" +
+                  "</Error>"
+        call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.fromValue(exception.statusCode))
+    }
+}

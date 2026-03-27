@@ -1,0 +1,112 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "apiVersion": "2006-03-01",
+    "endpointPrefix": "s3",
+    "protocol": "rest-xml",
+    "serviceFullName": "Amazon Simple Storage Service",
+    "signatureVersion": "s3v4",
+    "signingName": "s3",
+    "uid": "s3-2006-03-01"
+  },
+  "operations": {
+    "CreateBucket": {
+      "name": "CreateBucket",
+      "http": { "method": "PUT", "requestUri": "/{Bucket}" },
+      "input": { "shape": "CreateBucketRequest" }
+    },
+    "DeleteBucket": {
+      "name": "DeleteBucket",
+      "http": { "method": "DELETE", "requestUri": "/{Bucket}" },
+      "input": { "shape": "DeleteBucketRequest" }
+    },
+    "PutObject": {
+      "name": "PutObject",
+      "http": { "method": "PUT", "requestUri": "/{Bucket}/{Key+}" },
+      "input": { "shape": "PutObjectRequest" }
+    },
+    "GetObject": {
+      "name": "GetObject",
+      "http": { "method": "GET", "requestUri": "/{Bucket}/{Key+}" },
+      "input": { "shape": "GetObjectRequest" }
+    },
+    "HeadObject": {
+      "name": "HeadObject",
+      "http": { "method": "HEAD", "requestUri": "/{Bucket}/{Key+}" },
+      "input": { "shape": "HeadObjectRequest" }
+    },
+    "DeleteObject": {
+      "name": "DeleteObject",
+      "http": { "method": "DELETE", "requestUri": "/{Bucket}/{Key+}" },
+      "input": { "shape": "DeleteObjectRequest" }
+    },
+    "ListObjectsV2": {
+      "name": "ListObjectsV2",
+      "http": { "method": "GET", "requestUri": "/{Bucket}?list-type=2" },
+      "input": { "shape": "ListObjectsV2Request" }
+    }
+  },
+  "shapes": {
+    "CreateBucketRequest": {
+      "type": "structure",
+      "required": ["Bucket"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" }
+      }
+    },
+    "DeleteBucketRequest": {
+      "type": "structure",
+      "required": ["Bucket"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" }
+      }
+    },
+    "PutObjectRequest": {
+      "type": "structure",
+      "required": ["Bucket", "Key"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" },
+        "Key": { "shape": "ObjectKey", "location": "uri", "locationName": "Key" },
+        "Body": { "shape": "Body", "streaming": true }
+      },
+      "payload": "Body"
+    },
+    "GetObjectRequest": {
+      "type": "structure",
+      "required": ["Bucket", "Key"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" },
+        "Key": { "shape": "ObjectKey", "location": "uri", "locationName": "Key" }
+      }
+    },
+    "HeadObjectRequest": {
+      "type": "structure",
+      "required": ["Bucket", "Key"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" },
+        "Key": { "shape": "ObjectKey", "location": "uri", "locationName": "Key" }
+      }
+    },
+    "DeleteObjectRequest": {
+      "type": "structure",
+      "required": ["Bucket", "Key"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" },
+        "Key": { "shape": "ObjectKey", "location": "uri", "locationName": "Key" }
+      }
+    },
+    "ListObjectsV2Request": {
+      "type": "structure",
+      "required": ["Bucket"],
+      "members": {
+        "Bucket": { "shape": "BucketName", "location": "uri", "locationName": "Bucket" },
+        "Prefix": { "shape": "String", "location": "querystring", "locationName": "prefix" },
+        "Delimiter": { "shape": "String", "location": "querystring", "locationName": "delimiter" }
+      }
+    },
+    "BucketName": { "type": "string" },
+    "ObjectKey": { "type": "string" },
+    "Body": { "type": "blob" },
+    "String": { "type": "string" }
+  }
+}

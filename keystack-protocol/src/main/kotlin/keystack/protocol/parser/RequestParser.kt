@@ -52,3 +52,23 @@ class QueryRequestParser : RequestParser {
         }.groupBy({ it.first }, { it.second })
     }
 }
+
+class RestXmlRequestParser : RequestParser {
+    override suspend fun parse(request: ApplicationRequest, service: ServiceModel, operation: OperationModel): Map<String, Any?> {
+        val params = mutableMapOf<String, Any?>()
+        
+        // S3 uses path-based parameters for bucket and key
+        val path = request.path().split("/").filter { it.isNotEmpty() }
+        if (path.isNotEmpty()) {
+            params["Bucket"] = path[0]
+            if (path.size > 1) {
+                params["Key"] = path.drop(1).joinToString("/")
+            }
+        }
+        
+        // For PutObject, we might need the body as InputStream
+        // But for now, let's just handle it as bytes if it's small or skip
+        
+        return params
+    }
+}
