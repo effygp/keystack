@@ -71,6 +71,20 @@ class ServiceRegistry(private val koin: Koin = GlobalContext.get()) {
         
         return table
     }
+
+    /**
+     * Resets the state of all loaded service providers.
+     */
+    fun resetAll() {
+        loadedProviders.values.forEach { provider ->
+            try {
+                logger.info("Resetting state for service: {}", provider.serviceName)
+                provider.onStateReset()
+            } catch (e: Exception) {
+                logger.error("Failed to reset state for service: ${provider.serviceName}", e)
+            }
+        }
+    }
 }
 
 /**

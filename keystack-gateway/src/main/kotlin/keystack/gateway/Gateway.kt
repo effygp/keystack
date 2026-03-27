@@ -73,6 +73,11 @@ class Gateway(
                 call.respond(mapOf("status" to "running"))
             }
 
+            post("/_keystack/state/reset") {
+                serviceRegistry.resetAll()
+                call.respond(HttpStatusCode.OK, mapOf("status" to "reset"))
+            }
+
             route("{...}") {
                 handle {
                     val context = RequestContext(call.request)
