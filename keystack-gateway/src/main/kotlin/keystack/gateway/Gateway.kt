@@ -16,11 +16,15 @@ class Gateway(
     private val port: Int = 4566
 ) {
     private val logger = LoggerFactory.getLogger(Gateway::class.java)
+    
+    // Provider components
+    private val serviceRegistry = keystack.provider.ServiceRegistry()
 
     private val handlerChain = HandlerChain(
         requestHandlers = listOf(
             keystack.gateway.handlers.ServiceDetectionHandler(),
-            keystack.gateway.handlers.RequestParserHandler()
+            keystack.gateway.handlers.RequestParserHandler(),
+            keystack.provider.ServiceRequestRouter(serviceRegistry)
         ),
         responseHandlers = listOf(
             keystack.gateway.handlers.ResponseSerializerHandler()
