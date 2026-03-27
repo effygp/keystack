@@ -1,0 +1,45 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "apiVersion": "2012-08-10",
+    "endpointPrefix": "dynamodb",
+    "jsonVersion": "1.0",
+    "protocol": "json",
+    "serviceFullName": "Amazon DynamoDB",
+    "signatureVersion": "v4",
+    "signingName": "dynamodb",
+    "targetPrefix": "DynamoDB_20120810",
+    "uid": "dynamodb-2012-08-10"
+  },
+  "operations": {
+    "CreateTable": {
+      "name": "CreateTable",
+      "http": { "method": "POST", "requestUri": "/" },
+      "input": { "shape": "CreateTableInput" }
+    },
+    "PutItem": {
+      "name": "PutItem",
+      "http": { "method": "POST", "requestUri": "/" },
+      "input": { "shape": "PutItemInput" }
+    }
+  },
+  "shapes": {
+    "CreateTableInput": {
+      "type": "structure",
+      "required": ["TableName"],
+      "members": {
+        "TableName": { "shape": "String" }
+      }
+    },
+    "PutItemInput": {
+      "type": "structure",
+      "required": ["TableName", "Item"],
+      "members": {
+        "TableName": { "shape": "String" },
+        "Item": { "shape": "Item" }
+      }
+    },
+    "String": { "type": "string" },
+    "Item": { "type": "map", "key": { "shape": "String" }, "value": { "shape": "String" } }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "apiVersion": "2012-11-05",
+    "endpointPrefix": "sqs",
+    "protocol": "query",
+    "serviceFullName": "Amazon Simple Queue Service",
+    "signatureVersion": "v4",
+    "signingName": "sqs",
+    "uid": "sqs-2012-11-05"
+  },
+  "operations": {
+    "CreateQueue": {
+      "name": "CreateQueue",
+      "http": { "method": "POST", "requestUri": "/" },
+      "input": { "shape": "CreateQueueRequest" }
+    },
+    "SendMessage": {
+      "name": "SendMessage",
+      "http": { "method": "POST", "requestUri": "/" },
+      "input": { "shape": "SendMessageRequest" }
+    }
+  },
+  "shapes": {
+    "CreateQueueRequest": {
+      "type": "structure",
+      "required": ["QueueName"],
+      "members": {
+        "QueueName": { "shape": "String" }
+      }
+    },
+    "SendMessageRequest": {
+      "type": "structure",
+      "required": ["QueueUrl", "MessageBody"],
+      "members": {
+        "QueueUrl": { "shape": "String" },
+        "MessageBody": { "shape": "String" }
+      }
+    },
+    "String": { "type": "string" }
+  }
+}

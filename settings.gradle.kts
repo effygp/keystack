@@ -1,0 +1,17 @@
+rootProject.name = "keystack"
+
+include("keystack-gateway")
+include("keystack-protocol")
+include("keystack-provider")
+include("keystack-state")
+include("keystack-services")
+include("keystack-services:keystack-sqs")
+include("keystack-services:keystack-s3")
+include("keystack-services:keystack-dynamodb")
+include("keystack-services:keystack-sns")
+include("keystack-services:keystack-lambda")
+include("keystack-services:keystack-iam")
+include("keystack-services:keystack-cloudwatch")
+include("keystack-services:keystack-cloudformation")
+include("keystack-cli")
+include("keystack-test")
