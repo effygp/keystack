@@ -69,6 +69,17 @@ object ServiceRouter {
             }
         }
 
+        // 5. Path-based heuristics (S3 bucket paths, SQS queue URLs)
+        val path = indicators.path ?: "/"
+        val pathParts = path.split("/").filter { it.isNotEmpty() }
+        if (pathParts.size >= 2 && pathParts[0].all { it.isDigit() } && pathParts[0].length == 12) {
+            // Looks like /ACCOUNT_ID/QUEUE_NAME
+            ServiceCatalog.getService("sqs")?.let { service ->
+                val operation = resolveOperation(service, request, indicators)
+                if (operation != null) return service to operation
+            }
+        }
+
         return null
     }
 
