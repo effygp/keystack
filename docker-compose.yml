@@ -1,0 +1,17 @@
+services:
+  keystack:
+    build: .
+    image: keystack/keystack:latest
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      - NIMBUS_LOG_LEVEL=INFO
+      - NIMBUS_PERSISTENCE=true
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock # Required for Lambda service
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4566/_keystack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

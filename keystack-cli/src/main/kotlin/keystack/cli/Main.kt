@@ -20,6 +20,7 @@ class StartCommand : CliktCommand(name = "start", help = "Start the Keystack emu
 
     override fun run() {
         logger.info("Starting Keystack on {}:{}...", host, port)
+        keystack.provider.initKeystack()
         EmbeddedServer.main(arrayOf()) // Simplified for now
     }
 }
