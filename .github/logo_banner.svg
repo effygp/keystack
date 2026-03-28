@@ -1,0 +1,52 @@
+<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define Colors -->
+  <defs>
+    <style>
+      .light { fill: #33D9E8; }
+      .medium { fill: #248BA3; }
+      .dark { fill: #165366; }
+      .text-main { fill: #0D3C4D; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 700; }
+      .text-tagline { fill: #0D3C4D; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 600; letter-spacing: 0.05em; }
+    </style>
+  </defs>
+
+  <!-- Isometric Stack -->
+  <g transform="translate(150, 280)">
+    <!-- Bottom Layer -->
+    <path class="dark" d="M0 0 l50 -25 l50 25 l0 30 l-50 25 l-50 -25 Z" />
+    <path class="dark" d="M0 0 l-50 -25 l0 30 l50 25 Z" opacity="0.8" />
+    
+    <!-- Middle Layer -->
+    <g transform="translate(0, -40)">
+      <path class="medium" d="M0 0 l50 -25 l50 25 l0 30 l-50 25 l-50 -25 Z" />
+      <path class="medium" d="M0 0 l-50 -25 l0 30 l50 25 Z" opacity="0.8" />
+    </g>
+
+    <!-- Top Layer -->
+    <g transform="translate(0, -80)">
+      <path class="light" d="M0 0 l50 -25 l0 30 l-50 25 Z" />
+      <path class="light" d="M0 0 l-50 -25 l0 30 l50 25 Z" />
+      <path class="light" d="M0 -10 l50 -25 l0 -10 l-50 25 Z" opacity="0.5" transform="translate(0, -10)"/>
+      <!-- The flat cyan top -->
+      <path class="light" d="M0 -30 l50 25 l-50 25 l-50 -25 Z" />
+      
+      <!-- Key Icon on Top -->
+      <g transform="translate(0, -50)">
+        <!-- Key Head (Hexagon) -->
+        <path fill="none" stroke="#165366" stroke-width="4" d="M0 -25 l22 12 l0 25 l-22 12 l-22 -12 l0 -25 Z" />
+        <text x="0" y="0" text-anchor="middle" font-family="Arial" font-weight="900" font-size="20" fill="#165366">K</text>
+        <!-- Key Stem -->
+        <rect x="-4" y="24" width="8" height="30" fill="#165366" />
+        <!-- Key Teeth -->
+        <rect x="4" y="35" width="6" height="4" fill="#165366" />
+        <rect x="4" y="44" width="6" height="4" fill="#165366" />
+      </g>
+    </g>
+  </g>
+
+  <!-- Typography -->
+  <g transform="translate(320, 220)">
+    <text class="text-main" font-size="82">keystack</text>
+    <text class="text-tagline" font-size="22" transform="translate(2, 55)">LOCAL DEVELOPMENT CLOUD</text>
+  </g>
+</svg>
