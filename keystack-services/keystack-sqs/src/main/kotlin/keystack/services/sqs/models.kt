@@ -82,7 +82,7 @@ class StandardQueue(
     override val attributes: QueueAttributes = QueueAttributes(),
     override val tags: MutableMap<String, String> = mutableMapOf()
 ) : SqsQueue() {
-    private val messages = ConcurrentHashMap<String, SqsMessage>()
+    private val messages = Collections.synchronizedMap(LinkedHashMap<String, SqsMessage>())
     private val receiptToMessageId = ConcurrentHashMap<String, String>()
 
     override fun enqueue(message: SqsMessage) {
@@ -96,19 +96,21 @@ class StandardQueue(
         // Helper to pick visible messages
         fun pickMessages() {
             val now = Instant.now()
-            messages.values.asSequence()
-                .filter { it.isVisible && !it.isDelayed }
-                .take(maxMessages - result.size)
-                .forEach { msg ->
-                    msg.receiveCount++
-                    msg.visibilityDeadline = now.plusSeconds(visibilityTimeout.toLong())
-                    val receiptHandle = UUID.randomUUID().toString()
-                    msg.receiptHandles.add(receiptHandle)
-                    receiptToMessageId[receiptHandle] = msg.messageId
-                    if (msg.firstReceived == null) msg.firstReceived = now
-                    msg.lastReceived = now
-                    result.add(msg)
-                }
+            synchronized(messages) {
+                messages.values.asSequence()
+                    .filter { it.isVisible && !it.isDelayed }
+                    .take(maxMessages - result.size)
+                    .forEach { msg ->
+                        msg.receiveCount++
+                        msg.visibilityDeadline = now.plusSeconds(visibilityTimeout.toLong())
+                        val receiptHandle = UUID.randomUUID().toString()
+                        msg.receiptHandles.add(receiptHandle)
+                        receiptToMessageId[receiptHandle] = msg.messageId
+                        if (msg.firstReceived == null) msg.firstReceived = now
+                        msg.lastReceived = now
+                        result.add(msg)
+                    }
+            }
         }
 
         pickMessages()

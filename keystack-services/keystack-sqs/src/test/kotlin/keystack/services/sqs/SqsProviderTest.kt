@@ -86,4 +86,31 @@ class SqsProviderTest {
             assertEquals("QueueDoesNotExist", it.code)
         }
     }
+
+    @Test
+    fun `test standard queue best effort ordering`() = runBlocking {
+        val createResult = provider.createQueue(context, mapOf("QueueName" to "ordering-queue"))
+        val queueUrl = createResult["QueueUrl"] as String
+        
+        // Send 10 messages
+        val messagesSent = (1..10).map { i -> "msg-$i" }
+        for (body in messagesSent) {
+            provider.sendMessage(context, mapOf(
+                "QueueUrl" to queueUrl,
+                "MessageBody" to body
+            ))
+        }
+        
+        // Receive 10 messages (can be in multiple calls, but let's try 10 at once)
+        val receiveResult = provider.receiveMessage(context, mapOf(
+            "QueueUrl" to queueUrl,
+            "MaxNumberOfMessages" to "10"
+        ))
+        val messagesReceived = receiveResult["Messages"] as List<Map<String, Any?>>
+        
+        assertEquals(10, messagesReceived.size)
+        for (i in 0..9) {
+            assertEquals(messagesSent[i], messagesReceived[i]["Body"])
+        }
+    }
 }
