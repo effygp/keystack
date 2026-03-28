@@ -37,29 +37,62 @@ class QuerySerializer : ResponseSerializer {
     }
 
     override suspend fun serialize(response: Any, service: ServiceModel, operation: OperationModel, requestId: String, call: io.ktor.server.application.ApplicationCall) {
-        // Query protocol wraps result in <OperationNameResponse><OperationNameResult>...</OperationNameResult></OperationNameResponse>
         val rootName = "${operation.name}Response"
         val resultName = "${operation.name}Result"
+        val xmlNamespace = service.metadata.xmlNamespace?.get("uri") ?: ""
         
-        // This is a simplified XML serialization
-        val xml = "<$rootName xmlns=\"${service.metadata.xmlNamespace?.get("uri") ?: ""}\">" +
-                  "<$resultName>" +
-                  // Need a better way to serialize to XML based on shapes
-                  "</$resultName>" +
-                  "<ResponseMetadata><RequestId>$requestId</RequestId></ResponseMetadata>" +
-                  "</$rootName>"
+        val xmlBuilder = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        xmlBuilder.append("<$rootName xmlns=\"$xmlNamespace\">\n")
+        xmlBuilder.append("  <$resultName>\n")
         
-        call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.OK)
+        fun serializeValue(value: Any?, builder: StringBuilder, indent: String) {
+            when (value) {
+                is Map<*, *> -> {
+                    value.forEach { (k, v) ->
+                        builder.append("$indent  <$k>")
+                        if (v is Map<*, *> || v is List<*>) {
+                            builder.append("\n")
+                            serializeValue(v, builder, "$indent  ")
+                            builder.append("$indent  ")
+                        } else {
+                            builder.append(v ?: "")
+                        }
+                        builder.append("</$k>\n")
+                    }
+                }
+                is List<*> -> {
+                    value.forEach { item ->
+                        builder.append("$indent  <member>\n")
+                        serializeValue(item, builder, "$indent  ")
+                        builder.append("$indent  </member>\n")
+                    }
+                }
+                else -> builder.append(value ?: "")
+            }
+        }
+
+        if (response is Map<*, *>) {
+            serializeValue(response, xmlBuilder, "  ")
+        }
+        
+        xmlBuilder.append("  </$resultName>\n")
+        xmlBuilder.append("  <ResponseMetadata>\n")
+        xmlBuilder.append("    <RequestId>$requestId</RequestId>\n")
+        xmlBuilder.append("  </ResponseMetadata>\n")
+        xmlBuilder.append("</$rootName>")
+        
+        call.respondText(xmlBuilder.toString(), ContentType.Application.Xml, HttpStatusCode.OK)
     }
 
     override suspend fun serializeError(exception: ServiceException, service: ServiceModel, operation: OperationModel, requestId: String, call: io.ktor.server.application.ApplicationCall) {
-        val xml = "<ErrorResponse>" +
-                  "<Error>" +
-                  "<Type>${exception.type}</Type>" +
-                  "<Code>${exception.code}</Code>" +
-                  "<Message>${exception.message}</Message>" +
-                  "</Error>" +
-                  "<RequestId>$requestId</RequestId>" +
+        val xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                  "<ErrorResponse>\n" +
+                  "  <Error>\n" +
+                  "    <Type>${exception.type}</Type>\n" +
+                  "    <Code>${exception.code}</Code>\n" +
+                  "    <Message>${exception.message}</Message>\n" +
+                  "  </Error>\n" +
+                  "  <RequestId>$requestId</RequestId>\n" +
                   "</ErrorResponse>"
         call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.fromValue(exception.statusCode))
     }
@@ -72,7 +105,26 @@ class RestXmlSerializer : ResponseSerializer {
 
     override suspend fun serialize(response: Any, service: ServiceModel, operation: OperationModel, requestId: String, call: io.ktor.server.application.ApplicationCall) {
         // S3 REST-XML uses different formats depending on the operation
-        // For simplicity in MVP, we'll respond with a basic XML structure
+        if (response is Map<*, *>) {
+            val body = response["Body"]
+            if (body is java.io.InputStream) {
+                // S3 GetObject style response
+                val contentType = response["ContentType"] as? String ?: "application/octet-stream"
+                val contentLength = response["ContentLength"] as? Long
+                val etag = response["ETag"] as? String
+                val lastModified = response["LastModified"] as? String
+
+                if (contentLength != null) call.response.header(io.ktor.http.HttpHeaders.ContentLength, contentLength.toString())
+                if (etag != null) call.response.header(io.ktor.http.HttpHeaders.ETag, etag)
+                if (lastModified != null) call.response.header(io.ktor.http.HttpHeaders.LastModified, lastModified)
+                
+                call.respondOutputStream(ContentType.parse(contentType), HttpStatusCode.OK) {
+                    body.copyTo(this)
+                }
+                return
+            }
+        }
+
         if (response is String) {
             // Raw body like GetObject
             call.respondText(response, ContentType.Application.Xml, HttpStatusCode.OK)
