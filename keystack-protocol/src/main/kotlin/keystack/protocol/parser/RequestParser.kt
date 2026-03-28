@@ -39,7 +39,6 @@ class QueryRequestParser : RequestParser {
         }
         
         // AWS Query protocol uses flat keys with dots for nesting (e.g. Attribute.1.Name)
-        // For MVP, we can just return the flat map, or implement a nested structure builder
         return params.mapValues { it.value.firstOrNull() }
     }
 
@@ -65,9 +64,6 @@ class RestXmlRequestParser : RequestParser {
                 params["Key"] = path.drop(1).joinToString("/")
             }
         }
-        
-        // For PutObject, we might need the body as InputStream
-        // But for now, let's just handle it as bytes if it's small or skip
         
         return params
     }
