@@ -31,8 +31,6 @@ class S3Provider : ServiceProvider {
         val existingBucket = GlobalS3Store.buckets[bucketName]
         if (existingBucket != null) {
             if (existingBucket.accountId == context.accountId) {
-                // In AWS, creating an already owned bucket in the same region is a no-op
-                // For simplicity, we just return emptyMap here
                 return emptyMap()
             }
             throw ServiceException("BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again.")
@@ -128,7 +126,6 @@ class S3Provider : ServiceProvider {
         
         val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
         
-        // AWS S3 allows bucket deletion only by owner
         if (bucket.accountId != context.accountId) {
              throw ServiceException("AccessDenied", "Access Denied")
         }
