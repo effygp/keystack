@@ -23,7 +23,6 @@ class SqsProvider : ServiceProvider {
         val store = stores[context.accountId, context.region]
         
         if (store.queues.containsKey(queueName)) {
-            // In a real implementation, we'd check if attributes match or throw QueueAlreadyExists
             return mapOf("QueueUrl" to store.queues[queueName]!!.url)
         }
         
@@ -109,9 +108,7 @@ class SqsProvider : ServiceProvider {
         val accountId = parts[3]
         val queueName = parts[4]
         
-        // This search is across all regions for the given account if we don't know the region from URL
         // SQS URLs are region-agnostic in LocalStack usually or have region in hostname
-        // For now, search in common regions
         listOf("us-east-1", "us-west-2", "eu-central-1", "ap-southeast-1").forEach { region ->
             val store = stores[accountId, region]
             store.queues[queueName]?.let { return it }
@@ -128,6 +125,6 @@ class SqsProvider : ServiceProvider {
         "MessageId" to messageId,
         "Body" to body,
         "MD5OfBody" to md5OfBody,
-        "ReceiptHandle" to receiptHandles.firstOrNull() // Simplified
+        "ReceiptHandle" to receiptHandles.firstOrNull()
     )
 }
