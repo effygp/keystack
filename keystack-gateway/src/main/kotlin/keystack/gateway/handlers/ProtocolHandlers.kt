@@ -63,7 +63,6 @@ class ResponseSerializerHandler : Handler {
     private val restXmlSerializer = keystack.protocol.serializer.RestXmlSerializer()
 
     override suspend fun handle(chain: HandlerChain, context: RequestContext) {
-        // This is a response handler, it runs AFTER the provider
         val service = context.traceContext["serviceModel"] as? ServiceModel
         val operation = context.traceContext["operationModel"] as? keystack.protocol.model.OperationModel
         val call = context.request.call
@@ -84,6 +83,5 @@ class ResponseSerializerHandler : Handler {
                 }
             }
         }
-        // If not handled by serializer, the Gateway catch-all will handle it
     }
 }
