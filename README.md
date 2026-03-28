@@ -21,22 +21,61 @@
 
 ### Prerequisites
 
-- JDK 21+
-- Gradle
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) (Recommended)
+- OR [JDK 21+](https://adoptium.net/) and [Gradle](https://gradle.org/install/) (for local development)
 
-### Running the Emulator
+### Running with Docker (Recommended)
+
+The easiest way to run Keystack is using Docker Compose. This will build the emulator and start it on port `4566`.
 
 ```bash
+cd keystack
+docker compose up --build
+```
+
+### Running Locally with Gradle
+
+If you prefer to run Keystack directly on your machine:
+
+```bash
+cd keystack
 ./gradlew :keystack-cli:run --args="start"
 ```
 
 The emulator listens on `http://localhost:4566` by default.
 
-### Using with AWS CLI
+### Health Check
+
+Once the emulator is running, you can verify it's healthy:
 
 ```bash
-aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name test-queue
+curl http://localhost:4566/_keystack/health
 ```
+
+## Using with AWS CLI
+
+You can use Keystack with any standard AWS SDK or the AWS CLI by specifying the `--endpoint-url`.
+
+### SQS Example
+```bash
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name test-queue
+aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url http://localhost:4566/000000000000/test-queue --message-body "Hello from Keystack"
+```
+
+### S3 Example
+```bash
+aws --endpoint-url=http://localhost:4566 s3 mb s3://my-bucket
+aws --endpoint-url=http://localhost:4566 s3 cp myfile.txt s3://my-bucket/
+```
+
+## Configuration
+
+Keystack can be configured via environment variables (see `docker-compose.yml` for examples).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NIMBUS_LOG_LEVEL` | `INFO` | Logging level (TRACE, DEBUG, INFO, WARN, ERROR) |
+| `NIMBUS_PERSISTENCE` | `false` | Enable/Disable state persistence to disk |
 
 ## License
 
