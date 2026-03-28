@@ -93,7 +93,6 @@ class StandardQueue(
     override suspend fun receive(maxMessages: Int, visibilityTimeout: Int, waitTimeSeconds: Int): List<SqsMessage> {
         val result = mutableListOf<SqsMessage>()
         
-        // Helper to pick visible messages
         fun pickMessages() {
             val now = Instant.now()
             synchronized(messages) {
@@ -187,7 +186,6 @@ class FifoQueue(
             }
         }
         
-        // Long polling simplified for FIFO for now
         if (result.isEmpty() && waitTimeSeconds > 0) {
              withTimeoutOrNull(waitTimeSeconds * 1000L) {
                 for (msg in messageChannel) {
