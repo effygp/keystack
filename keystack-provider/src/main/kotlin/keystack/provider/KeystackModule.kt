@@ -13,6 +13,7 @@ import org.koin.dsl.module
 import org.koin.core.context.startKoin
 
 val keystackModule = module {
+    single<ServiceRegistry> { ServiceRegistry(get()) }
     single<ServiceProvider> { SqsProvider() }
     single<ServiceProvider> { S3Provider() }
     single<ServiceProvider> { DynamoDbProvider() }
@@ -21,7 +22,7 @@ val keystackModule = module {
     single<ServiceProvider> { IamProvider() }
     single<ServiceProvider> { StsProvider() }
     single<ServiceProvider> { CloudWatchProvider() }
-    single<ServiceProvider> { CloudFormationProvider() }
+    single<ServiceProvider> { CloudFormationProvider(get()) }
 }
 
 fun initKeystack() {

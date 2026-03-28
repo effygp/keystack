@@ -53,9 +53,19 @@ class CloudFormationProviderTest {
         ))
         assertNotNull(createResult["StackId"])
         
-        // 2. Describe Stacks
-        val describeResult = provider.describeStacks(context, mapOf("StackName" to stackName))
-        val stacks = describeResult["Stacks"] as List<Map<String, Any?>>
+        // 2. Describe Stacks (Assert CREATE_IN_PROGRESS immediately)
+        var describeResult = provider.describeStacks(context, mapOf("StackName" to stackName))
+        var stacks = describeResult["Stacks"] as List<Map<String, Any?>>
+        assertEquals("CREATE_IN_PROGRESS", stacks[0]["StackStatus"])
+        
+        // Poll for CREATE_COMPLETE
+        var attempts = 0
+        while (attempts < 10 && stacks[0]["StackStatus"] != "CREATE_COMPLETE") {
+            kotlinx.coroutines.delay(100)
+            describeResult = provider.describeStacks(context, mapOf("StackName" to stackName))
+            stacks = describeResult["Stacks"] as List<Map<String, Any?>>
+            attempts++
+        }
         assertEquals("CREATE_COMPLETE", stacks[0]["StackStatus"])
         
         // 3. Describe Resources

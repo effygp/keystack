@@ -13,8 +13,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
-class CloudFormationProvider(private val registry: ServiceRegistry) : ServiceProvider {
+class CloudFormationProvider(
+    private val registry: ServiceRegistry,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+) : ServiceProvider {
     override val serviceName = "cloudformation"
     private val logger = LoggerFactory.getLogger(CloudFormationProvider::class.java)
     private val stores = AccountRegionStore("cloudformation") { CloudFormationStore() }
@@ -42,15 +49,16 @@ class CloudFormationProvider(private val registry: ServiceRegistry) : ServicePro
         )
         store.stacks[stackName] = stack
         
-        // MVP: Execute stack creation synchronously
-        try {
-            deployStack(context, stack)
-            stack.stackStatus = "CREATE_COMPLETE"
-            logger.info("Successfully created stack: {}", stackName)
-        } catch (e: Exception) {
-            stack.stackStatus = "CREATE_FAILED"
-            logger.error("Failed to create stack: {}", stackName, e)
-            throw ServiceException("ValidationError", "Stack creation failed: ${e.message}")
+        // Launch stack creation in background
+        scope.launch {
+            try {
+                deployStack(context, stack)
+                stack.stackStatus = "CREATE_COMPLETE"
+                logger.info("Successfully created stack: {}", stackName)
+            } catch (e: Exception) {
+                stack.stackStatus = "CREATE_FAILED"
+                logger.error("Failed to create stack: {}", stackName, e)
+            }
         }
         
         return mapOf("StackId" to stackId)
