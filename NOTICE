@@ -1,0 +1,11 @@
+Keystack
+Copyright 2026+ Keystack contributors
+
+This product includes software derived from LocalStack
+(https://github.com/localstack/localstack), originally developed by
+LocalStack contributors and Atlassian Pty Ltd, licensed under the
+Apache License, Version 2.0.
+
+Original copyright notices:
+  Copyright (c) 2017+ LocalStack contributors
+  Copyright (c) 2016 Atlassian Pty Ltd
