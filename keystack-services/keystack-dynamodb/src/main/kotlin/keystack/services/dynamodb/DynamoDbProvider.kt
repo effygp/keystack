@@ -48,7 +48,6 @@ class DynamoDbProvider : ServiceProvider {
         val store = stores[context.accountId, context.region]
         val items = store.items[tableName] ?: throw ServiceException("ResourceNotFoundException", "Table not found")
         
-        // Simplified PutItem: just add to list (should handle updates based on keys)
         items.add(item)
         
         return emptyMap()
@@ -62,7 +61,6 @@ class DynamoDbProvider : ServiceProvider {
         val store = stores[context.accountId, context.region]
         val items = store.items[tableName] ?: throw ServiceException("ResourceNotFoundException", "Table not found")
         
-        // Simplified lookup: find first match for key
         val result = items.find { item ->
             key.all { (k, v) -> item[k] == v }
         }
