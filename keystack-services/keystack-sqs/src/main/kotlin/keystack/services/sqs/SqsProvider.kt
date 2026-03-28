@@ -28,14 +28,17 @@ class SqsProvider : ServiceProvider {
         }
         
         val isFifo = queueName.endsWith(".fifo")
+        val queueUrl = "http://localhost:4566/${context.accountId}/$queueName"
+        val queueArn = "arn:aws:sqs:${context.region}:${context.accountId}:$queueName"
+        
         val queue = if (isFifo) {
-            FifoQueue(queueName, context.accountId, context.region)
+            FifoQueue(queueName, queueArn, queueUrl)
         } else {
-            StandardQueue(queueName, context.accountId, context.region)
+            StandardQueue(queueName, queueArn, queueUrl)
         }
         
         store.queues[queueName] = queue
-        logger.info("Created SQS queue: {} in region: {}", queueName, context.region)
+        logger.info("Created SQS queue: {} in region: {} -> URL: {}", queueName, context.region, queue.url)
         
         return mapOf("QueueUrl" to queue.url)
     }
@@ -109,7 +112,7 @@ class SqsProvider : ServiceProvider {
         // This search is across all regions for the given account if we don't know the region from URL
         // SQS URLs are region-agnostic in LocalStack usually or have region in hostname
         // For now, search in common regions
-        listOf("us-east-1", "us-west-2", "eu-central-1").forEach { region ->
+        listOf("us-east-1", "us-west-2", "eu-central-1", "ap-southeast-1").forEach { region ->
             val store = stores[accountId, region]
             store.queues[queueName]?.let { return it }
         }

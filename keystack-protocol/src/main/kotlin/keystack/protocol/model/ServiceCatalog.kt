@@ -19,6 +19,7 @@ data class ServiceMetadata(
     val signingName: String? = null,
     val targetPrefix: String? = null,
     val jsonVersion: String? = null,
+    val xmlNamespace: Map<String, String>? = null,
     val uid: String? = null
 )
 
