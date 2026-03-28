@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.svg" alt="Keystack Logo" width="400">
+</p>
+
 # Keystack
 
 **Keystack** is an open-source AWS cloud emulator in **Kotlin** (JVM), providing a modular, permissively licensed alternative to LocalStack.
