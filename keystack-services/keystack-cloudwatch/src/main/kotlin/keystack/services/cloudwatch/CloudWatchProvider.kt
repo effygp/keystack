@@ -45,10 +45,7 @@ class CloudWatchProvider : ServiceProvider {
                 )
             } else null
             
-            if (value == null && statisticValues == null) {
-                // Technically AWS allows either Value or StatisticValues
-                // If neither, skip or error. For now, skip.
-            } else {
+            if (value != null || statisticValues != null) {
                 val dataPoint = DataPoint(timestamp, value, statisticValues, unit)
                 store.putDataPoint(metric, dataPoint)
             }
@@ -101,22 +98,16 @@ class CloudWatchProvider : ServiceProvider {
                 val period = (params["$metricStatPrefix.Period"] as String).toInt()
                 val stat = params["$metricStatPrefix.Stat"] as String // e.g., Sum, Average
                 
-                val metric = Metric(msNamespace, msMetricName, msDimensions)
                 val dataPoints = store.metricData[metric] ?: emptyList()
                 
                 val filtered = dataPoints.filter { it.timestamp.isAfter(startTime) && it.timestamp.isBefore(endTime) }
                 
-                // Group by period and aggregate
-                // For MVP, we'll just return raw values if period matches, or aggregate simply
-                // Real CloudWatch aggregation is complex. Let's do a simple version.
-                
                 val timestamps = mutableListOf<String>()
                 val values = mutableListOf<Double>()
                 
-                // Simplified: just return points within range
                 filtered.forEach { dp ->
                     timestamps.add(DateTimeFormatter.ISO_INSTANT.format(dp.timestamp))
-                    values.add(dp.value ?: 0.0) // Simplified
+                    values.add(dp.value ?: 0.0)
                 }
                 
                 results.add(mapOf(
