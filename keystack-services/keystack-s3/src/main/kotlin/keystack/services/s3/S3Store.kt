@@ -8,6 +8,7 @@ data class S3Bucket(
     val name: String,
     val region: String,
     val creationDate: Instant,
+    val accountId: String,
     val tags: MutableMap<String, String> = mutableMapOf()
 )
 
@@ -20,7 +21,14 @@ data class S3Object(
     val metadata: Map<String, String> = emptyMap()
 )
 
-class S3Store : ServiceStore() {
+object GlobalS3Store {
     val buckets = ConcurrentHashMap<String, S3Bucket>()
+    
+    fun reset() {
+        buckets.clear()
+    }
+}
+
+class S3Store : ServiceStore() {
     val objects = ConcurrentHashMap<String, ConcurrentHashMap<String, S3Object>>() // bucket -> key -> object
 }

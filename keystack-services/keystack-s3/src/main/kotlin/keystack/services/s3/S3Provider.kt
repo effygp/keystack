@@ -19,26 +19,37 @@ class S3Provider : ServiceProvider {
     private val stores = AccountRegionStore("s3") { S3Store() }
     private val objectStore = FilesystemS3ObjectStore(Paths.get("data", "s3"))
 
+    override fun onStateReset() {
+        GlobalS3Store.reset()
+        stores.reset()
+    }
+
     @AwsOperation("CreateBucket")
     fun createBucket(context: RequestContext, params: Map<String, Any?>): Map<String, Any?> {
         val bucketName = params["Bucket"] as? String ?: throw ServiceException("InvalidBucketName", "Bucket name is required")
-        val store = stores[context.accountId, context.region]
         
-        if (store.buckets.containsKey(bucketName)) {
-            // In a real implementation, we'd check if it's the same account or throw BucketAlreadyExists
-            return emptyMap()
+        val existingBucket = GlobalS3Store.buckets[bucketName]
+        if (existingBucket != null) {
+            if (existingBucket.accountId == context.accountId) {
+                // In AWS, creating an already owned bucket in the same region is a no-op
+                // For simplicity, we just return emptyMap here
+                return emptyMap()
+            }
+            throw ServiceException("BucketAlreadyExists", "The requested bucket name is not available. The bucket namespace is shared by all users of the system. Please select a different name and try again.")
         }
         
         val bucket = S3Bucket(
             name = bucketName,
             region = context.region,
-            creationDate = Instant.now()
+            creationDate = Instant.now(),
+            accountId = context.accountId
         )
         
-        store.buckets[bucketName] = bucket
+        GlobalS3Store.buckets[bucketName] = bucket
+        val store = stores[context.accountId, context.region]
         store.objects[bucketName] = ConcurrentHashMap()
         
-        logger.info("Created S3 bucket: {} in region: {}", bucketName, context.region)
+        logger.info("Created S3 bucket: {} in region: {} for account: {}", bucketName, context.region, context.accountId)
         return emptyMap()
     }
 
@@ -48,10 +59,7 @@ class S3Provider : ServiceProvider {
         val key = params["Key"] as? String ?: throw ServiceException("InvalidKey", "Key is required")
         val body = params["Body"]
         
-        val store = stores[context.accountId, context.region]
-        if (!store.buckets.containsKey(bucketName)) {
-            throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
-        }
+        val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
         
         val inputStream = when (body) {
             is InputStream -> body
@@ -70,6 +78,7 @@ class S3Provider : ServiceProvider {
             contentType = params["ContentType"] as? String ?: "application/octet-stream"
         )
         
+        val store = stores[bucket.accountId, bucket.region]
         store.objects[bucketName]!![key] = s3Object
         
         logger.debug("Put S3 object: {}/{}", bucketName, key)
@@ -81,7 +90,8 @@ class S3Provider : ServiceProvider {
         val bucketName = params["Bucket"] as? String ?: throw ServiceException("NoSuchBucket", "Bucket name is required")
         val key = params["Key"] as? String ?: throw ServiceException("NoSuchKey", "Key is required")
         
-        val store = stores[context.accountId, context.region]
+        val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
+        val store = stores[bucket.accountId, bucket.region]
         val bucketObjects = store.objects[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
         val s3Object = bucketObjects[key] ?: throw ServiceException("NoSuchKey", "The specified key does not exist")
         
@@ -101,7 +111,8 @@ class S3Provider : ServiceProvider {
         val bucketName = params["Bucket"] as? String ?: throw ServiceException("NoSuchBucket", "Bucket name is required")
         val key = params["Key"] as? String ?: throw ServiceException("NoSuchKey", "Key is required")
         
-        val store = stores[context.accountId, context.region]
+        val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
+        val store = stores[bucket.accountId, bucket.region]
         val bucketObjects = store.objects[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
         
         bucketObjects.remove(key)
@@ -114,18 +125,21 @@ class S3Provider : ServiceProvider {
     @AwsOperation("DeleteBucket")
     fun deleteBucket(context: RequestContext, params: Map<String, Any?>): Map<String, Any?> {
         val bucketName = params["Bucket"] as? String ?: throw ServiceException("NoSuchBucket", "Bucket name is required")
-        val store = stores[context.accountId, context.region]
         
-        if (!store.buckets.containsKey(bucketName)) {
-            throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
+        val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
+        
+        // AWS S3 allows bucket deletion only by owner
+        if (bucket.accountId != context.accountId) {
+             throw ServiceException("AccessDenied", "Access Denied")
         }
-        
+
+        val store = stores[bucket.accountId, bucket.region]
         val bucketObjects = store.objects[bucketName]
         if (bucketObjects != null && bucketObjects.isNotEmpty()) {
             throw ServiceException("BucketNotEmpty", "The bucket you tried to delete is not empty")
         }
         
-        store.buckets.remove(bucketName)
+        GlobalS3Store.buckets.remove(bucketName)
         store.objects.remove(bucketName)
         
         logger.info("Deleted S3 bucket: {}", bucketName)
@@ -137,7 +151,8 @@ class S3Provider : ServiceProvider {
         val bucketName = params["Bucket"] as? String ?: throw ServiceException("NoSuchBucket", "Bucket name is required")
         val prefix = params["Prefix"] as? String ?: ""
         
-        val store = stores[context.accountId, context.region]
+        val bucket = GlobalS3Store.buckets[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
+        val store = stores[bucket.accountId, bucket.region]
         val bucketObjects = store.objects[bucketName] ?: throw ServiceException("NoSuchBucket", "The specified bucket does not exist")
         
         val contents = bucketObjects.values.asSequence()

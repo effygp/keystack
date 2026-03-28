@@ -18,6 +18,7 @@ class S3ProviderTest {
     @BeforeTest
     fun setup() {
         provider = S3Provider()
+        provider.onStateReset()
     }
 
     @Test
@@ -33,6 +34,26 @@ class S3ProviderTest {
         
         // 3. Delete Bucket
         provider.deleteBucket(context, mapOf("Bucket" to bucketName))
+    }
+
+    @Test
+    fun `test global bucket uniqueness`() = runBlocking {
+        val bucketName = "global-unique-bucket"
+        val account1 = "111111111111"
+        val account2 = "222222222222"
+        
+        val context1 = context.copy(accountId = account1)
+        val context2 = context.copy(accountId = account2)
+        
+        // 1. Create bucket with account1
+        provider.createBucket(context1, mapOf("Bucket" to bucketName))
+        
+        // 2. Attempt to create bucket with the SAME name with account2
+        val exception = assertFailsWith<ServiceException> {
+            provider.createBucket(context2, mapOf("Bucket" to bucketName))
+        }
+        
+        assertEquals("BucketAlreadyExists", exception.code)
     }
 
     @Test
