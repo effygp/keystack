@@ -12,7 +12,6 @@ typealias ExceptionHandler = suspend (context: RequestContext, exception: Throwa
 
 /**
  * Pipeline processing for AWS requests.
- * Reference: localstack/aws/app.py lines 17-89
  */
 class HandlerChain(
     private val requestHandlers: List<Handler>,
