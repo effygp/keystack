@@ -17,7 +17,6 @@ class Gateway(
 ) {
     private val logger = LoggerFactory.getLogger(Gateway::class.java)
     
-    // Provider components
     private val serviceRegistry = keystack.provider.ServiceRegistry()
 
     private val handlerChain = HandlerChain(
