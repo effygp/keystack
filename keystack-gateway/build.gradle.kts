@@ -4,6 +4,7 @@ val jacksonVersion: String by project
 val koinVersion: String by project
 val coroutinesVersion: String by project
 val slf4jVersion: String by project
+val logbackVersion: String by project
 
 dependencies {
     implementation(project(":keystack-protocol"))

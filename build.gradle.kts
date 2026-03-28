@@ -16,8 +16,10 @@ subprojects {
     group = "keystack"
     version = "0.1.0-SNAPSHOT"
 
-    kotlin {
-        jvmToolchain(21)
+    extensions.configure<org.gradle.api.plugins.JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -25,5 +27,9 @@ subprojects {
             jvmTarget = "21"
             freeCompilerArgs = listOf("-Xjsr305=strict")
         }
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
 }

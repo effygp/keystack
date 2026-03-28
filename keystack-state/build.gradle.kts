@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":keystack-gateway"))
+    implementation(project(":keystack-protocol"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("io.insert-koin:koin-core:$koinVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
