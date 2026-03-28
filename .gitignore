@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+keystack-cli/build/
+keystack-gateway/build/
+keystack-protocol/build/
+keystack-provider/build/
+keystack-state/build/
+keystack-test/build/
+keystack-services/*/build/
+
+# IDE
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS
+.DS_Store
