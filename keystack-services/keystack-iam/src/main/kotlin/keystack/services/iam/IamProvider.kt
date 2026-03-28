@@ -12,7 +12,6 @@ class IamProvider : ServiceProvider {
     override val serviceName = "iam"
     private val logger = LoggerFactory.getLogger(IamProvider::class.java)
     
-    // IAM is global, so we use a fixed region for storage within an account
     private val GLOBAL_REGION = "aws-global"
     private val stores = AccountRegionStore("iam") { IamStore() }
 
@@ -110,10 +109,6 @@ class IamProvider : ServiceProvider {
         
         val store = getStore(context)
         val role = store.roles[roleName] ?: throw ServiceException("NoSuchEntity", "The role with name $roleName cannot be found.")
-        // In permissive mode, we don't strictly need to check if the policy exists, but let's do it for better emulation
-        // if (!store.policies.containsKey(policyArn)) {
-        //     throw ServiceException("NoSuchEntity", "The policy with ARN $policyArn cannot be found.")
-        // }
         
         role.attachedPolicies.add(policyArn)
         logger.info("Attached policy {} to role {} for account: {}", policyArn, roleName, context.accountId)
