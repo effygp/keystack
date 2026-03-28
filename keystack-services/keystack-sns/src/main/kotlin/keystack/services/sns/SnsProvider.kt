@@ -65,7 +65,6 @@ class SnsProvider : ServiceProvider {
         
         logger.info("Publishing message to topic: {}", finalTopicArn)
         
-        // Deliver to each subscription (simplified synchronous delivery)
         topic.subscriptions.forEach { sub ->
             try {
                 deliverMessage(sub, message)
@@ -79,8 +78,6 @@ class SnsProvider : ServiceProvider {
 
     private fun deliverMessage(subscription: SnsSubscription, message: String) {
         logger.debug("Delivering SNS message to {}: {}", subscription.protocol, subscription.endpoint)
-        // In a real implementation, this would call the SQS provider or an external HTTP endpoint
-        // For MVP, we'll just log it
     }
 
     @AwsOperation("ListTopics")
