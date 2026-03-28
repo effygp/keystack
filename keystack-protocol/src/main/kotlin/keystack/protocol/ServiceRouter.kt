@@ -20,12 +20,11 @@ object ServiceRouter {
 
     /**
      * Detects the AWS service and operation from the incoming request.
-     * Reference: localstack/aws/protocol/service_router.py lines 360-493
      */
     fun detectService(request: ApplicationRequest): Pair<ServiceModel, OperationModel>? {
         val indicators = extractIndicators(request)
         
-        // 1. Try signing name from Authorization header
+        // Try signing name from Authorization header
         indicators.signingName?.let { signingName ->
             ServiceCatalog.findBySigningName(signingName)?.let { service ->
                 val operation = resolveOperation(service, request, indicators)
@@ -33,7 +32,7 @@ object ServiceRouter {
             }
         }
 
-        // 2. Try X-Amz-Target header
+        // Try X-Amz-Target header
         indicators.target?.let { target ->
             val targetPrefix = target.substringBefore(".")
             val operationName = target.substringAfter(".")
@@ -45,7 +44,7 @@ object ServiceRouter {
             }
         }
 
-        // 3. Try host-based routing
+        // Try host-based routing
         indicators.host?.let { host ->
             val prefix = host.substringBefore(".")
             ServiceCatalog.findByEndpointPrefix(prefix)?.let { service ->
@@ -54,14 +53,10 @@ object ServiceRouter {
             }
         }
 
-        // 4. Try Action parameter (Query protocol)
+        // Try Action parameter (Query protocol)
         indicators.action?.let { action ->
-            // We don't have service yet, search all services for this action? 
-            // Better: many services use endpoint prefix in host or specific path
-            // For now, let's try to match action across all loaded services if we can't find it otherwise
             ServiceCatalog.getAllServices().forEach { service ->
                 service.operations.values.find { it.name == action }?.let { operation ->
-                    // Basic heuristic: check if protocol matches
                     if (service.metadata.protocol == "query" || service.metadata.protocol == "ec2") {
                         return service to operation
                     }
@@ -69,11 +64,10 @@ object ServiceRouter {
             }
         }
 
-        // 5. Path-based heuristics (S3 bucket paths, SQS queue URLs)
+        // Path-based heuristics (S3 bucket paths, SQS queue URLs)
         val path = indicators.path ?: "/"
         val pathParts = path.split("/").filter { it.isNotEmpty() }
         if (pathParts.size >= 2 && pathParts[0].all { it.isDigit() } && pathParts[0].length == 12) {
-            // Looks like /ACCOUNT_ID/QUEUE_NAME
             ServiceCatalog.getService("sqs")?.let { service ->
                 val operation = resolveOperation(service, request, indicators)
                 if (operation != null) return service to operation
