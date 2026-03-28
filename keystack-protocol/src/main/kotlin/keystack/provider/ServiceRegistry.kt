@@ -104,8 +104,6 @@ class OperationDispatcher(
         
         if (expandParameters) {
             val params = context.serviceRequest ?: emptyMap<String, Any?>()
-            // Map params to function parameters if expandParameters is true
-            // This is complex for Kotlin reflection, for now we just pass context and params
             args.add(params)
         }
 
