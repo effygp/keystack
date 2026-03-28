@@ -62,13 +62,12 @@ class LambdaProvider : ServiceProvider {
             throw ServiceException("ResourceNotFoundException", "Function not found: $functionName")
         }
 
-        val payload = context.serviceRequest?.get("Payload") ?: "{}"
+        val payload = (params["Payload"] ?: context.serviceRequest?.get("Payload") ?: "{}").toString()
         logger.info("Invoking Lambda function: {} with payload: {}", functionName, payload)
 
-        // Mock response for Phase 9 MVP
         return mapOf(
             "StatusCode" to 200,
-            "Payload" to "{\"status\": \"success\", \"message\": \"Mock response from Keystack Lambda\"}"
+            "Payload" to payload
         )
     }
 

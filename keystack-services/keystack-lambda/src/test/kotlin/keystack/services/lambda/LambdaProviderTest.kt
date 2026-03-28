@@ -51,13 +51,14 @@ class LambdaProviderTest {
         val functionName = "invoke-test"
         provider.createFunction(context, mapOf("FunctionName" to functionName))
         
+        val inputPayload = "{\"key\": \"value\"}"
         val invokeResult = provider.invoke(context, mapOf(
             "FunctionName" to functionName,
-            "Payload" to "{\"key\": \"value\"}"
+            "Payload" to inputPayload
         ))
         
         assertEquals(200, invokeResult["StatusCode"])
-        assertTrue((invokeResult["Payload"] as String).contains("Mock response"))
+        assertEquals(inputPayload, invokeResult["Payload"])
     }
 
     @Test
