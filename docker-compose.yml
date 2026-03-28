@@ -5,8 +5,8 @@ services:
     ports:
       - "127.0.0.1:4566:4566"
     environment:
-      - NIMBUS_LOG_LEVEL=INFO
-      - NIMBUS_PERSISTENCE=true
+      - KEYSTACK_LOG_LEVEL=INFO
+      - KEYSTACK_PERSISTENCE=true
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock # Required for Lambda service

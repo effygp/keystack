@@ -37,7 +37,7 @@ class EmbeddedServer(
 }
 
 fun main() {
-    val hostPort = System.getenv("NIMBUS_GATEWAY_LISTEN") ?: "0.0.0.0:4566"
+    val hostPort = System.getenv("KEYSTACK_GATEWAY_LISTEN") ?: "0.0.0.0:4566"
     val host = hostPort.substringBefore(":")
     val port = hostPort.substringAfter(":", "4566").toInt()
     EmbeddedServer(host, port).run()

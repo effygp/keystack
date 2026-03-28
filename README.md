@@ -76,8 +76,8 @@ Keystack can be configured via environment variables (see `docker-compose.yml` f
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NIMBUS_LOG_LEVEL` | `INFO` | Logging level (TRACE, DEBUG, INFO, WARN, ERROR) |
-| `NIMBUS_PERSISTENCE` | `false` | Enable/Disable state persistence to disk |
+| `KEYSTACK_LOG_LEVEL` | `INFO` | Logging level (TRACE, DEBUG, INFO, WARN, ERROR) |
+| `KEYSTACK_PERSISTENCE` | `false` | Enable/Disable state persistence to disk |
 
 ## License
 
