@@ -49,7 +49,6 @@ class CloudFormationProvider(
         )
         store.stacks[stackName] = stack
         
-        // Launch stack creation in background
         scope.launch {
             try {
                 deployStack(context, stack)
@@ -140,7 +139,6 @@ class CloudFormationProvider(
     }
 
     private suspend fun teardownStack(context: RequestContext, stack: CloudFormationStack) {
-        // Delete in reverse order
         for (resource in stack.resources.reversed()) {
             resource.resourceStatus = "DELETE_IN_PROGRESS"
             try {
@@ -180,7 +178,6 @@ class CloudFormationProvider(
                 callService(context, "s3", "DeleteBucket", mapOf("Bucket" to physicalId))
             }
             "AWS::SQS::Queue" -> {
-                // SQS DeleteQueue uses QueueUrl
                 callService(context, "sqs", "DeleteQueue", mapOf("QueueUrl" to physicalId))
             }
         }
