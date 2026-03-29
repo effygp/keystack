@@ -98,6 +98,7 @@ class CloudWatchProvider : ServiceProvider {
                 val period = (params["$metricStatPrefix.Period"] as String).toInt()
                 val stat = params["$metricStatPrefix.Stat"] as String // e.g., Sum, Average
                 
+                val metric = Metric(msNamespace, msMetricName, msDimensions)
                 val dataPoints = store.metricData[metric] ?: emptyList()
                 
                 val filtered = dataPoints.filter { it.timestamp.isAfter(startTime) && it.timestamp.isBefore(endTime) }
