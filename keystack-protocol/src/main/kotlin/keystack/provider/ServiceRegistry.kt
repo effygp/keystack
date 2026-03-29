@@ -26,9 +26,7 @@ class ServiceRegistry(private val koin: Koin = GlobalContext.get()) {
         if (loadedProviders.containsKey(serviceName)) return loadedProviders[serviceName]
         
         val provider = try {
-            // Try to resolve the provider from Koin
-            koin.getOrNull<ServiceProvider> { org.koin.core.parameter.parametersOf(serviceName) }
-                ?: koin.getAll<ServiceProvider>().find { it.serviceName == serviceName }
+            koin.getAll<ServiceProvider>().find { it.serviceName == serviceName }
         } catch (e: Exception) {
             logger.error("Failed to load service provider for: $serviceName", e)
             null
@@ -102,7 +100,10 @@ class OperationDispatcher(
     suspend fun invoke(context: RequestContext): Any? {
         val args = mutableListOf<Any?>(provider, context)
         
-        if (expandParameters) {
+        // function.parameters[0] is 'this' (instance)
+        // function.parameters[1] is 'context'
+        // function.parameters[2] is 'params' (if present)
+        if (expandParameters || function.parameters.size >= 3) {
             val params = context.serviceRequest ?: emptyMap<String, Any?>()
             args.add(params)
         }

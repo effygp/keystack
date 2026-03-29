@@ -10,23 +10,29 @@ import keystack.services.sts.StsProvider
 import keystack.services.cloudwatch.CloudWatchProvider
 import keystack.services.cloudformation.CloudFormationProvider
 import org.koin.dsl.module
+import org.koin.dsl.bind
 import org.koin.core.context.startKoin
 
 val keystackModule = module {
-    single<ServiceRegistry> { ServiceRegistry(get()) }
-    single<ServiceProvider> { SqsProvider() }
-    single<ServiceProvider> { S3Provider() }
-    single<ServiceProvider> { DynamoDbProvider() }
-    single<ServiceProvider> { SnsProvider() }
-    single<ServiceProvider> { LambdaProvider() }
-    single<ServiceProvider> { IamProvider() }
-    single<ServiceProvider> { StsProvider() }
-    single<ServiceProvider> { CloudWatchProvider() }
-    single<ServiceProvider> { CloudFormationProvider(get()) }
+    single { ServiceRegistry() }
+    
+    single { SqsProvider() } bind ServiceProvider::class
+    single { S3Provider() } bind ServiceProvider::class
+    single { DynamoDbProvider() } bind ServiceProvider::class
+    single { SnsProvider() } bind ServiceProvider::class
+    single { LambdaProvider() } bind ServiceProvider::class
+    single { IamProvider() } bind ServiceProvider::class
+    single { StsProvider() } bind ServiceProvider::class
+    single { CloudWatchProvider() } bind ServiceProvider::class
+    single { CloudFormationProvider(get()) } bind ServiceProvider::class
 }
 
 fun initKeystack() {
-    startKoin {
-        modules(keystackModule)
+    try {
+        startKoin {
+            modules(keystackModule)
+        }
+    } catch (e: Exception) {
+        // Already started
     }
 }
