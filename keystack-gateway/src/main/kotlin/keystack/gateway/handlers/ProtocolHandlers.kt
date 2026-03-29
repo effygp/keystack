@@ -8,6 +8,7 @@ import keystack.protocol.ServiceRouter
 import keystack.protocol.model.ServiceModel
 import keystack.protocol.parser.JsonRequestParser
 import keystack.protocol.parser.QueryRequestParser
+import keystack.protocol.parser.RestXmlRequestParser
 import keystack.protocol.serializer.JsonSerializer
 import keystack.protocol.serializer.QuerySerializer
 import org.slf4j.LoggerFactory

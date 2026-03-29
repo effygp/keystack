@@ -21,8 +21,9 @@ object ServiceRouter {
     /**
      * Detects the AWS service and operation from the incoming request.
      */
-    fun detectService(request: ApplicationRequest): Pair<ServiceModel, OperationModel>? {
+    suspend fun detectService(request: ApplicationRequest): Pair<ServiceModel, OperationModel>? {
         val indicators = extractIndicators(request)
+        logger.debug("Detecting service with indicators: {}", indicators)
         
         // Try signing name from Authorization header
         indicators.signingName?.let { signingName ->
@@ -54,10 +55,28 @@ object ServiceRouter {
         }
 
         // Try Action parameter (Query protocol)
-        indicators.action?.let { action ->
+        var action = indicators.action
+        if (action == null && request.httpMethod == HttpMethod.Post && request.contentType().match(ContentType.Application.FormUrlEncoded)) {
+            try {
+                val body = request.call.receiveText()
+                logger.debug("Body for action extraction: {}", body)
+                if (body.contains("Action=")) {
+                    action = body.split("&")
+                        .find { it.startsWith("Action=") }
+                        ?.substringAfter("Action=")
+                        ?.let { java.net.URLDecoder.decode(it, "UTF-8") }
+                    logger.debug("Extracted action from body: {}", action)
+                }
+            } catch (e: Exception) {
+                logger.error("Error reading body for action extraction", e)
+            }
+        }
+
+        action?.let { act ->
             ServiceCatalog.getAllServices().forEach { service ->
-                service.operations.values.find { it.name == action }?.let { operation ->
+                service.operations.values.find { it.name == act }?.let { operation ->
                     if (service.metadata.protocol == "query" || service.metadata.protocol == "ec2") {
+                        logger.debug("Detected service {} from action {}", service.metadata.serviceFullName, act)
                         return service to operation
                     }
                 }

@@ -16,6 +16,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cors-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-double-receive-jvm:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson-jvm:$ktorVersion")
     
