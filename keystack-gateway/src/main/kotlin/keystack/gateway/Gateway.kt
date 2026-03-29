@@ -9,6 +9,7 @@ import io.ktor.http.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.doublereceive.DoubleReceive
 import org.slf4j.LoggerFactory
 
 class Gateway(
@@ -19,32 +20,32 @@ class Gateway(
     
     private val serviceRegistry = keystack.provider.ServiceRegistry()
 
-    private val handlerChain = HandlerChain(
-        requestHandlers = listOf(
-            keystack.gateway.handlers.ServiceDetectionHandler(),
-            keystack.gateway.handlers.RequestParserHandler(),
-            keystack.provider.ServiceRequestRouter(serviceRegistry)
-        ),
-        responseHandlers = listOf(
-            keystack.gateway.handlers.ResponseSerializerHandler()
-        ),
-        exceptionHandlers = listOf(
-            { context, exception ->
-                logger.error("Error handling request ${context.requestId}", exception)
-                val status = if (exception is ServiceException) {
-                    HttpStatusCode.fromValue(exception.statusCode)
-                } else {
-                    HttpStatusCode.InternalServerError
-                }
-                
-                if (!context.request.call.response.isCommitted) {
-                    context.request.call.respondText(
-                        exception.message ?: "Internal Error",
-                        status = status
-                    )
-                }
+    private val requestHandlers = listOf(
+        keystack.gateway.handlers.ServiceDetectionHandler(),
+        keystack.gateway.handlers.RequestParserHandler(),
+        keystack.provider.ServiceRequestRouter(serviceRegistry)
+    )
+    
+    private val responseHandlers = listOf(
+        keystack.gateway.handlers.ResponseSerializerHandler()
+    )
+    
+    private val exceptionHandlers: List<ExceptionHandler> = listOf(
+        { context, exception ->
+            logger.error("Error handling request ${context.requestId}", exception)
+            val status = if (exception is ServiceException) {
+                HttpStatusCode.fromValue(exception.statusCode)
+            } else {
+                HttpStatusCode.InternalServerError
             }
-        )
+            
+            if (!context.request.call.response.isCommitted) {
+                context.request.call.respondText(
+                    exception.message ?: "Internal Error",
+                    status = status
+                )
+            }
+        }
     )
 
     private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null
@@ -56,6 +57,7 @@ class Gateway(
     }
 
     fun Application.module() {
+        install(DoubleReceive)
         install(ContentNegotiation) {
             json()
         }
@@ -115,8 +117,9 @@ class Gateway(
             route("{...}") {
                 handle {
                     val context = RequestContext(call.request)
+                    val chain = HandlerChain(requestHandlers, responseHandlers, exceptionHandlers)
                     try {
-                        handlerChain.handle(context)
+                        chain.handle(context)
 
                         if (!call.response.isCommitted) {
                             when {

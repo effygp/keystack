@@ -3,7 +3,9 @@ package keystack.gateway
 /**
  * A handler in the gateway pipeline.
  */
-typealias Handler = suspend (chain: HandlerChain, context: RequestContext) -> Unit
+interface Handler {
+    suspend fun handle(chain: HandlerChain, context: RequestContext)
+}
 
 /**
  * Exception handler to catch and serialize errors.
@@ -27,18 +29,16 @@ class HandlerChain(
 
     suspend fun next(context: RequestContext) {
         if (!stopped && index < requestHandlers.size) {
-            requestHandlers[index++](this, context)
+            requestHandlers[index++].handle(this, context)
         }
     }
 
     suspend fun handle(context: RequestContext) {
         try {
-            while (!stopped && index < requestHandlers.size) {
-                next(context)
-            }
+            next(context)
 
             if (!stopped) {
-                responseHandlers.forEach { it(this, context) }
+                responseHandlers.forEach { it.handle(this, context) }
             }
         } catch (e: Throwable) {
             exceptionHandlers.forEach { it(context, e) }
