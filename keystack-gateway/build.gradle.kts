@@ -9,6 +9,7 @@ val logbackVersion: String by project
 dependencies {
     implementation(project(":keystack-protocol"))
     implementation(project(":keystack-provider"))
+    implementation(project(":keystack-services:keystack-lambda"))
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-cio-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-host-common-jvm:$ktorVersion")

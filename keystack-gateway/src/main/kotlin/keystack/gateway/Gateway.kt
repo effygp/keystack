@@ -77,6 +77,41 @@ class Gateway(
                 call.respond(HttpStatusCode.OK, mapOf("status" to "reset"))
             }
 
+            route("/_keystack_lambda/{executorId}") {
+                post("/invocations/{requestId}/response") {
+                    val executorId = call.parameters["executorId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val requestId = call.parameters["requestId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val payload = call.receive<ByteArray>()
+                    keystack.services.lambda.execution.ExecutorRouter.getEndpoint(executorId)?.onInvocationResponse(requestId, payload, null)
+                    call.respond(HttpStatusCode.Accepted)
+                }
+                post("/invocations/{requestId}/error") {
+                    val executorId = call.parameters["executorId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val requestId = call.parameters["requestId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val payload = call.receive<ByteArray>()
+                    keystack.services.lambda.execution.ExecutorRouter.getEndpoint(executorId)?.onInvocationError(requestId, payload, null)
+                    call.respond(HttpStatusCode.Accepted)
+                }
+                post("/invocations/{requestId}/logs") {
+                    val executorId = call.parameters["executorId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val requestId = call.parameters["requestId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val payload = call.receiveText()
+                    keystack.services.lambda.execution.ExecutorRouter.getEndpoint(executorId)?.onLogs(requestId, payload)
+                    call.respond(HttpStatusCode.Accepted)
+                }
+                post("/status/{statusId}/ready") {
+                    val executorId = call.parameters["executorId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    keystack.services.lambda.execution.ExecutorRouter.getEndpoint(executorId)?.onStatusReady()
+                    call.respond(HttpStatusCode.Accepted)
+                }
+                post("/status/{statusId}/error") {
+                    val executorId = call.parameters["executorId"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val error = try { call.receiveText() } catch (e: Exception) { "" }
+                    keystack.services.lambda.execution.ExecutorRouter.getEndpoint(executorId)?.onStatusError(error)
+                    call.respond(HttpStatusCode.Accepted)
+                }
+            }
+
             route("{...}") {
                 handle {
                     val context = RequestContext(call.request)
