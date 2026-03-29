@@ -62,6 +62,28 @@ class LambdaProviderTest {
     }
 
     @Test
+    fun `test function code storage`() = runBlocking {
+        val functionName = "code-test"
+        val zipBase64 = "UEsDBAoAAAAAALhufVwgMDo2BgAAAAYAAAAIABwAaW5kZXgucHlVVAkAAxxZyWkaWclpdXgLAAEE9QEAAAQUAAAAaGVsbG8KUEsBAh4DCgAAAAAAuG59XCAwOjYGAAAABgAAAAgAGAAAAAAAAQAAAKSBAAAAAGluZGV4LnB5VVQFAAMcWclpdXgLAAEE9QEAAAQUAAAAUEsFBgAAAAABAAEATgAAAEgAAAAAAA=="
+        
+        // 1. Create Function with code
+        provider.createFunction(context, mapOf(
+            "FunctionName" to functionName,
+            "Code" to mapOf("ZipFile" to zipBase64)
+        ))
+        
+        // 2. Get Function and verify code exists
+        val getResult = provider.getFunction(context, mapOf("FunctionName" to functionName))
+        val config = getResult["Configuration"] as FunctionConfiguration
+        assertNotNull(config.code)
+        assertTrue(config.code!!.codeSize > 0)
+        assertNotNull(config.code!!.zipFilePath)
+        
+        // 3. Delete Function
+        provider.deleteFunction(context, mapOf("FunctionName" to functionName))
+    }
+
+    @Test
     fun `test get non-existent function fails`() = runBlocking {
         assertFailsWith<ServiceException> {
             provider.getFunction(context, mapOf("FunctionName" to "no-func"))
