@@ -96,7 +96,7 @@ class CloudWatchProvider : ServiceProvider {
                 val msMetricName = params["$metricStatPrefix.Metric.MetricName"] as String
                 val msDimensions = parseDimensions(params, "$metricStatPrefix.Metric.Dimensions")
                 val period = (params["$metricStatPrefix.Period"] as String).toInt()
-                val stat = params["$metricStatPrefix.Stat"] as String // e.g., Sum, Average
+                val stat = params["$metricStatPrefix.Stat"] as String
                 
                 val metric = Metric(msNamespace, msMetricName, msDimensions)
                 val dataPoints = store.metricData[metric] ?: emptyList()

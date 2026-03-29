@@ -46,18 +46,12 @@ object StateSnapshot {
                     val accountId = accountDir.name
                     accountDir.listDirectoryEntries("*.json").forEach { filePath ->
                         val region = filePath.nameWithoutExtension
-                        
-                        // We need a way to load into the existing store instance
                         val existingStore = store[accountId, region]
                         
                         try {
                             val content = Files.readString(filePath)
-                            // Update the existing store instance with data from JSON
-                            // This is tricky with Jackson if we want to update an existing object.
-                            // We can use readerForUpdating.
                             mapper.readerForUpdating(existingStore).readValue<ServiceStore>(content)
                         } catch (e: Exception) {
-                            // Log error or handle it
                             System.err.println("Failed to load state for ${store.serviceName} $accountId $region: ${e.message}")
                         }
                     }

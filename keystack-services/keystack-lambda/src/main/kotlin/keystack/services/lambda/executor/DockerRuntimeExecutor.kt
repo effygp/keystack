@@ -65,50 +65,51 @@ class DockerRuntimeExecutor(
             functionConfig.code?.getUnzippedCodeLocation()?.toAbsolutePath()?.toString()
                 ?: throw IllegalStateException("No code path for function ${functionConfig.functionName}")
         }
-val containerEnvVars = envVars.toMutableMap()
-containerEnvVars["_HANDLER"] = functionConfig.handler
-containerEnvVars["AWS_LAMBDA_FUNCTION_HANDLER"] = functionConfig.handler
-if (isHotReloading) {
-    containerEnvVars["KEYSTACK_HOT_RELOADING_PATHS"] = "/var/task"
-}
 
-logger.debug("Creating container {} for function {} with code path {} (hotReloading={})", 
-    containerName, functionConfig.functionName, codePath, isHotReloading)
+        val containerEnvVars = envVars.toMutableMap()
+        containerEnvVars["_HANDLER"] = functionConfig.handler
+        containerEnvVars["AWS_LAMBDA_FUNCTION_HANDLER"] = functionConfig.handler
+        if (isHotReloading) {
+            containerEnvVars["KEYSTACK_HOT_RELOADING_PATHS"] = "/var/task"
+        }
 
-// Create the container
-val exposedPort = ExposedPort.tcp(8080)
-val createCmd = dockerClient.createContainerCmd(imageName)
-    .withName(containerName)
-    .withEnv(containerEnvVars.map { "${it.key}=${it.value}" })
-    .withExposedPorts(exposedPort)
-    .withHostConfig(
-        HostConfig.newHostConfig()
-            .withBinds(Bind(codePath, Volume("/var/task"), AccessMode.ro))
-            .withExtraHosts("host.docker.internal:host-gateway")
-            .withPortBindings(PortBinding(Ports.Binding.bindPort(0), exposedPort))
-    )
-    .withCmd(functionConfig.handler)
+        logger.debug(
+            "Creating container {} for function {} with code path {} (hotReloading={})",
+            containerName, functionConfig.functionName, codePath, isHotReloading
+        )
 
-val container = createCmd.exec()
+        val exposedPort = ExposedPort.tcp(8080)
+        val createCmd = dockerClient.createContainerCmd(imageName)
+            .withName(containerName)
+            .withEnv(containerEnvVars.map { "${it.key}=${it.value}" })
+            .withExposedPorts(exposedPort)
+            .withHostConfig(
+                HostConfig.newHostConfig()
+                    .withBinds(Bind(codePath, Volume("/var/task"), AccessMode.ro))
+                    .withExtraHosts("host.docker.internal:host-gateway")
+                    .withPortBindings(PortBinding(Ports.Binding.bindPort(0), exposedPort))
+            )
+            .withCmd(functionConfig.handler)
 
-// Start the container
-dockerClient.startContainerCmd(container.id).exec()
+        val container = createCmd.exec()
 
-// Get host port
-val inspectResp = dockerClient.inspectContainerCmd(container.id).exec()
-val binding = inspectResp.networkSettings.ports.bindings[exposedPort]?.firstOrNull()
-    ?: throw IllegalStateException("Container port 8080 not bound to host")
-hostPort = binding.hostPortSpec.toInt()
+        dockerClient.startContainerCmd(container.id).exec()
 
-executorEndpoint.containerAddress = "127.0.0.1"
-executorEndpoint.containerPort = hostPort!!
+        val inspectResp = dockerClient.inspectContainerCmd(container.id).exec()
+        val binding = inspectResp.networkSettings.ports.bindings[exposedPort]?.firstOrNull()
+            ?: throw IllegalStateException("Container port 8080 not bound to host")
+        hostPort = binding.hostPortSpec.toInt()
 
-// Wait for container readiness
-waitForContainerReady()
+        executorEndpoint.containerAddress = "127.0.0.1"
+        executorEndpoint.containerPort = hostPort!!
 
-logger.info("Started container {} for function {} (image: {}, port: {})",
-    containerName, functionConfig.functionName, imageName, hostPort)
-}    override suspend fun stop() {
+        waitForContainerReady()
+
+        logger.info(
+            "Started container {} for function {} (image: {}, port: {})",
+            containerName, functionConfig.functionName, imageName, hostPort
+        )
+    }    override suspend fun stop() {
         try {
             dockerClient.stopContainerCmd(containerName).withTimeout(5).exec()
             dockerClient.removeContainerCmd(containerName).exec()

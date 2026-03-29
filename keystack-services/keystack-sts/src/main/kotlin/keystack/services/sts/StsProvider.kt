@@ -29,7 +29,6 @@ class StsProvider : ServiceProvider {
         
         logger.info("STS AssumeRole: {} with session: {}", roleArn, roleSessionName)
         
-        // Return mock temporary credentials
         val expiration = Instant.now().plusSeconds(3600)
         return mapOf(
             "AssumedRoleUser" to mapOf(

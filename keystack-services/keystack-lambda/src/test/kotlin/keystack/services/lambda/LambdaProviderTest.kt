@@ -23,7 +23,7 @@ class LambdaProviderTest {
     fun `test function lifecycle`() = runBlocking {
         val functionName = "test-function"
         
-        // 1. Create Function
+        // Create Function
         val createResult = provider.createFunction(context, mapOf(
             "FunctionName" to functionName,
             "Runtime" to "python3.9",
@@ -32,7 +32,7 @@ class LambdaProviderTest {
         assertEquals(functionName, createResult["FunctionName"])
         assertNotNull(createResult["FunctionArn"])
         
-        // 2. Get Function
+        // Get Function
         val getResult = provider.getFunction(context, mapOf("FunctionName" to functionName))
         val config = getResult["Configuration"] as FunctionConfiguration
         assertEquals(functionName, config.functionName)
@@ -42,7 +42,7 @@ class LambdaProviderTest {
         val functions = listResult["Functions"] as List<FunctionConfiguration>
         assertTrue(functions.any { it.functionName == functionName })
         
-        // 4. Delete Function
+        // Delete Function
         provider.deleteFunction(context, mapOf("FunctionName" to functionName))
     }
 
@@ -66,20 +66,20 @@ class LambdaProviderTest {
         val functionName = "code-test"
         val zipBase64 = "UEsDBAoAAAAAALhufVwgMDo2BgAAAAYAAAAIABwAaW5kZXgucHlVVAkAAxxZyWkaWclpdXgLAAEE9QEAAAQUAAAAaGVsbG8KUEsBAh4DCgAAAAAAuG59XCAwOjYGAAAABgAAAAgAGAAAAAAAAQAAAKSBAAAAAGluZGV4LnB5VVQFAAMcWclpdXgLAAEE9QEAAAQUAAAAUEsFBgAAAAABAAEATgAAAEgAAAAAAA=="
         
-        // 1. Create Function with code
+        // Create Function with code
         provider.createFunction(context, mapOf(
             "FunctionName" to functionName,
             "Code" to mapOf("ZipFile" to zipBase64)
         ))
         
-        // 2. Get Function and verify code exists
+        // Get Function and verify code exists
         val getResult = provider.getFunction(context, mapOf("FunctionName" to functionName))
         val config = getResult["Configuration"] as FunctionConfiguration
         assertNotNull(config.code)
         assertTrue(config.code!!.codeSize > 0)
         assertNotNull(config.code!!.zipFilePath)
         
-        // 3. Delete Function
+        // Delete Function
         provider.deleteFunction(context, mapOf("FunctionName" to functionName))
     }
 

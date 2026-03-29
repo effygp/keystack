@@ -18,7 +18,7 @@ class SqsProvider : ServiceProvider {
     @AwsOperation("CreateQueue")
     fun createQueue(context: RequestContext, params: Map<String, Any?>): Map<String, Any?> {
         val queueName = params["QueueName"] as? String ?: throw ServiceException("MissingParameter", "QueueName is required")
-        val attributes = params.filterKeys { it.startsWith("Attribute") } // Simplistic attribute parsing
+        val attributes = params.filterKeys { it.startsWith("Attribute") }
         
         val store = stores[context.accountId, context.region]
         
@@ -83,7 +83,6 @@ class SqsProvider : ServiceProvider {
         
         val messages = queue.receive(maxMessages, visibilityTimeout, waitTimeSeconds)
         
-        // AWS SDKs expect a list of messages
         return mapOf("Messages" to messages.map { it.toMap() })
     }
 
@@ -102,13 +101,11 @@ class SqsProvider : ServiceProvider {
     }
 
     private fun findQueueByUrl(url: String): SqsQueue? {
-        // Simple URL parsing: http://localhost:4566/000000000000/queue-name
         val parts = url.split("/")
         if (parts.size < 5) return null
         val accountId = parts[3]
         val queueName = parts[4]
         
-        // SQS URLs are region-agnostic in LocalStack usually or have region in hostname
         listOf("us-east-1", "us-west-2", "eu-central-1", "ap-southeast-1").forEach { region ->
             val store = stores[accountId, region]
             store.queues[queueName]?.let { return it }

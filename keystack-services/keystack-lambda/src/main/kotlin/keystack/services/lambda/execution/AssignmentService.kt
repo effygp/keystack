@@ -40,7 +40,7 @@ class AssignmentService(
     ): ExecutionEnvironment {
         val versionEnvs = environments.getOrPut(versionManagerId) { ConcurrentHashMap() }
 
-        // 1. Try to reserve an existing warm container
+        // Try to reserve an existing warm container
         val applicableEnvs = versionEnvs.values
             .filter { it.initializationType == provisioningType }
             .toList() // Snapshot to avoid ConcurrentModificationException
@@ -57,7 +57,7 @@ class AssignmentService(
             }
         }
 
-        // 2. No warm container available — cold start
+        // No warm container available — cold start
         if (provisioningType == InitializationType.PROVISIONED_CONCURRENCY) {
             throw AssignmentException(
                 "No provisioned concurrency environment available for ${functionConfig.functionName}"
@@ -144,7 +144,7 @@ class AssignmentService(
     ) {
         val versionEnvs = environments.getOrPut(versionManagerId) { ConcurrentHashMap() }
         
-        // 1. Get current provisioned count
+        // Get current provisioned count
         val currentProvisioned = versionEnvs.values.count { it.initializationType == InitializationType.PROVISIONED_CONCURRENCY }
         
         if (targetCount > currentProvisioned) {

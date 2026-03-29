@@ -27,10 +27,6 @@ class LambdaService {
         maxConcurrentStarts = maxConcurrentStarts
     )
 
-    /**
-     * Invoke a Lambda function. This is the main entry point.
-     * Handles environment assignment (warm reuse or cold start) and invocation.
-     */
     suspend fun invoke(
         functionConfig: FunctionConfiguration,
         payload: ByteArray,
@@ -44,7 +40,6 @@ class LambdaService {
             invocationType = invocationType
         )
 
-        // getEnvironment() tries warm first, falls back to cold start
         val environment = assignmentService.getEnvironment(
             versionManagerId = versionManagerId,
             functionConfig = functionConfig,

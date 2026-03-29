@@ -32,7 +32,6 @@ class LambdaProvider : ServiceProvider {
         val store = stores[context.accountId, context.region]
         val arn = "arn:aws:lambda:${context.region}:${context.accountId}:function:$functionName"
         
-        // Extract code
         val codeParams = params["Code"] as? Map<String, Any?>
         val zipFile = codeParams?.get("ZipFile") as? String
         val s3Key = codeParams?.get("S3Key") as? String
@@ -99,7 +98,6 @@ class LambdaProvider : ServiceProvider {
             ).filterValues { it != null }
         }
 
-        // Mock echo-back for functions without code
         return mapOf(
             "StatusCode" to 200,
             "Payload" to payloadString
@@ -119,9 +117,8 @@ class LambdaProvider : ServiceProvider {
         val config = store.functions.remove(functionName)
         codeManager.deleteCode(functionName)
         
-        // Clean up provisioned configs and stop environments
         if (config != null) {
-            val qualifiers = listOf("\$LATEST") // For now, only $LATEST is supported properly
+            val qualifiers = listOf("\$LATEST")
             qualifiers.forEach { qualifier ->
                 val versionManagerId = "${config.functionArn}:$qualifier"
                 store.provisionedConfigs.remove(versionManagerId)
@@ -149,7 +146,6 @@ class LambdaProvider : ServiceProvider {
         val versionManagerId = "${config.functionArn}:$qualifier"
         lambdaService.assignmentService.scaleProvisionedConcurrency(versionManagerId, config, provisionedConcurrentExecutions)
         
-        // Store the config for later retrieval
         store.provisionedConfigs[versionManagerId] = provisionedConcurrentExecutions
         
         return mapOf(
@@ -189,7 +185,6 @@ class LambdaProvider : ServiceProvider {
         val versionManagerId = "${config.functionArn}:$qualifier"
         store.provisionedConfigs.remove(versionManagerId)
         
-        // Scale down to 0
         lambdaService.assignmentService.scaleProvisionedConcurrency(versionManagerId, config, 0)
         
         return emptyMap()
