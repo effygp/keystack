@@ -9,6 +9,15 @@ import kotlin.test.*
 
 class GatewaySmokeTest {
 
+    @BeforeTest
+    fun setup() {
+        try {
+            keystack.provider.initKeystack()
+        } catch (e: Exception) {
+            // Ignore if already started
+        }
+    }
+
     @Test
     fun testHealthEndpoint() = testApplication {
         application {

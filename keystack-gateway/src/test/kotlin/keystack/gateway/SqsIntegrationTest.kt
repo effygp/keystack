@@ -8,13 +8,22 @@ import kotlin.test.*
 
 class SqsIntegrationTest {
 
+    @BeforeTest
+    fun setup() {
+        try {
+            keystack.provider.initKeystack()
+        } catch (e: Exception) {
+            // Ignore if already started
+        }
+    }
+
     @Test
     fun testCreateQueueAndSendMessage() = testApplication {
         application {
             Gateway().apply { module() }
         }
 
-        // 1. CreateQueue
+        // CreateQueue
         val createResponse = client.post("/") {
             header("Content-Type", "application/x-www-form-urlencoded")
             setBody("Action=CreateQueue&QueueName=test-queue&Version=2012-11-05")
@@ -27,11 +36,7 @@ class SqsIntegrationTest {
         assertTrue(createBody.contains("<CreateQueueResponse"), "Should contain <CreateQueueResponse")
         assertTrue(createBody.contains("<CreateQueueResult"), "Should contain <CreateQueueResult")
         
-        // This is where it's expected to fail if Step 1 is NOT implemented:
-        // The QueueUrl should be in the response, but currently QuerySerializer is stubbed.
-        // assertTrue(createBody.contains("<QueueUrl>"), "Should contain <QueueUrl>")
-
-        // 2. SendMessage
+        // SendMessage
         val sendResponse = client.post("/") {
             header("Content-Type", "application/x-www-form-urlencoded")
             setBody("Action=SendMessage&QueueUrl=http://localhost:4566/000000000000/test-queue&MessageBody=hello&Version=2012-11-05")
@@ -40,6 +45,5 @@ class SqsIntegrationTest {
         val sendBody = sendResponse.bodyAsText()
         println("SendMessage Response: $sendBody")
         assertTrue(sendBody.contains("<SendMessageResponse"), "Should contain <SendMessageResponse")
-        // assertTrue(sendBody.contains("<MessageId>"), "Should contain <MessageId>")
     }
 }
