@@ -1,22 +1,29 @@
 # Build stage
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:17-jdk AS builder
 
 WORKDIR /app
 
 # Copy the entire project
 COPY . .
 
-# Build the fat JAR (Shadow JAR)
-# We use --no-daemon to avoid persistent processes in Docker build
-RUN ./gradlew :keystack-cli:shadowJar --no-daemon
+# Ensure gradlew has executable permissions
+RUN chmod +x gradlew
+
+# Build the fat JAR (Shadow JAR) with memory limits
+# We use -P flags to ensure settings are passed correctly
+RUN ./gradlew :keystack-cli:shadowJar --no-daemon \
+    -Dorg.gradle.jvmargs="-Xmx1g -XX:MaxMetaspaceSize=512m" \
+    -Dorg.gradle.parallel=false \
+    -Dorg.gradle.workers.max=1 \
+    -Pkotlin.compiler.execution.strategy=in-process
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-# Add a non-root user for security
-RUN adduser -D keystack
+# Add a non-root user for security (Debian/Ubuntu syntax)
+RUN useradd -m keystack
 
 # Copy the shadow JAR from the builder stage
 COPY --from=builder /app/keystack-cli/build/libs/keystack-all.jar /app/keystack.jar
