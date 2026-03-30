@@ -19,17 +19,25 @@ object ServiceRouter {
     private val logger = LoggerFactory.getLogger(ServiceRouter::class.java)
 
     /**
-     * Detects the AWS service and operation from the incoming request.
+     * Detects the AWS service, operation, and protocol from the incoming request.
      */
-    suspend fun detectService(request: ApplicationRequest): Pair<ServiceModel, OperationModel>? {
+    suspend fun detectService(request: ApplicationRequest): Triple<ServiceModel, OperationModel, String>? {
         val indicators = extractIndicators(request)
         logger.debug("Detecting service with indicators: {}", indicators)
         
+        val protocol = when {
+            indicators.target != null || request.headers.contains("X-Amz-Target") -> "json"
+            indicators.action != null || request.queryParameters.contains("Action") -> "query"
+            request.contentType().toString().contains("application/x-amz-json") -> "json"
+            request.contentType().match(ContentType.Application.FormUrlEncoded) -> "query"
+            else -> null
+        }
+
         // Try signing name from Authorization header
         indicators.signingName?.let { signingName ->
             ServiceCatalog.findBySigningName(signingName)?.let { service ->
                 val operation = resolveOperation(service, request, indicators)
-                if (operation != null) return service to operation
+                if (operation != null) return Triple(service, operation, protocol ?: service.metadata.protocol ?: "query")
             }
         }
 
@@ -40,7 +48,7 @@ object ServiceRouter {
             
             ServiceCatalog.findByTargetPrefix(targetPrefix)?.let { service ->
                 service.operations.values.find { it.name == operationName || it.name?.equals(operationName, ignoreCase = true) == true }?.let { operation ->
-                    return service to operation
+                    return Triple(service, operation, protocol ?: "json")
                 }
             }
         }
@@ -50,7 +58,7 @@ object ServiceRouter {
             val prefix = host.substringBefore(".")
             ServiceCatalog.findByEndpointPrefix(prefix)?.let { service ->
                 val operation = resolveOperation(service, request, indicators)
-                if (operation != null) return service to operation
+                if (operation != null) return Triple(service, operation, protocol ?: service.metadata.protocol ?: "query")
             }
         }
 
@@ -77,7 +85,7 @@ object ServiceRouter {
                 service.operations.values.find { it.name == act }?.let { operation ->
                     if (service.metadata.protocol == "query" || service.metadata.protocol == "ec2") {
                         logger.debug("Detected service {} from action {}", service.metadata.serviceFullName, act)
-                        return service to operation
+                        return Triple(service, operation, "query")
                     }
                 }
             }
@@ -89,7 +97,7 @@ object ServiceRouter {
         if (pathParts.size >= 2 && pathParts[0].all { it.isDigit() } && pathParts[0].length == 12) {
             ServiceCatalog.getService("sqs")?.let { service ->
                 val operation = resolveOperation(service, request, indicators)
-                if (operation != null) return service to operation
+                if (operation != null) return Triple(service, operation, protocol ?: "query")
             }
         }
 

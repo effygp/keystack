@@ -23,6 +23,7 @@ data class RequestContext(
     var region: String = "us-east-1",
     var accountId: String = "000000000000",
     var partition: String = "aws",
+    var protocol: String? = null,
     val requestId: String = UUID.randomUUID().toString(),
     var serviceRequest: Map<String, Any?>? = null,
     var serviceResponse: Any? = null,

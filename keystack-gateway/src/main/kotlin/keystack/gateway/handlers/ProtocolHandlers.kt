@@ -17,9 +17,10 @@ class ServiceDetectionHandler : Handler {
     override suspend fun handle(chain: HandlerChain, context: RequestContext) {
         val result = ServiceRouter.detectService(context.request)
         if (result != null) {
-            val (service, operation) = result
+            val (service, operation, protocol) = result
             context.serviceName = service.metadata.endpointPrefix
             context.operationName = operation.name
+            context.protocol = protocol
             context.traceContext["serviceModel"] = service
             context.traceContext["operationModel"] = operation
         }
@@ -37,7 +38,8 @@ class RequestParserHandler : Handler {
         val operation = context.traceContext["operationModel"] as? keystack.protocol.model.OperationModel
         
         if (service != null && operation != null) {
-            val parser = when (service.metadata.protocol) {
+            val protocol = context.protocol ?: service.metadata.protocol
+            val parser = when (protocol) {
                 "json" -> jsonParser
                 "query" -> queryParser
                 "rest-xml" -> restXmlParser
@@ -69,7 +71,8 @@ class ResponseSerializerHandler : Handler {
         val call = context.request.call
 
         if (service != null && operation != null) {
-            val serializer = when (service.metadata.protocol) {
+            val protocol = context.protocol ?: service.metadata.protocol
+            val serializer = when (protocol) {
                 "json" -> jsonSerializer
                 "query" -> querySerializer
                 "rest-xml" -> restXmlSerializer
